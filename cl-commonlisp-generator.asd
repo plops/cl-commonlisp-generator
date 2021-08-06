@@ -1,4 +1,4 @@
-(asdf:defsystem cl-py-generator
+(asdf:defsystem cl-commonlisp-generator
     :version "0"
     :description "Emit Common Lisp code"
     :maintainer " <kielhorn.martin@gmail.com>"

@@ -8,9 +8,9 @@
 
 (defun write-source (name code &optional (dir (user-homedir-pathname))
 				 ignore-hash)
-  (let* ((fn (merge-pathnames (format nil "~a.py" name)
+  (let* ((fn (merge-pathnames (format nil "~a.lisp" name)
 			      dir))
-	(code-str (emit-py
+	(code-str (emit-cl
 		   :clear-env t
 		   :code code))
 	(fn-hash (sxhash fn))
@@ -26,10 +26,10 @@
 			  :if-exists :supersede
 			  :if-does-not-exist :create)
 	 (write-sequence code-str s))
-       #+nil
+       
 
-       (sb-ext:run-program "/usr/bin/autopep8" (list "--max-line-length 80" (namestring fn)))
-       #+sbcl (sb-ext:run-program "/usr/bin/yapf" (list "-i" (namestring fn)))))))
+       (sb-ext:run-program "/usr/local/bin/lisp-format" (list (namestring fn)))
+       ))))
 
 (defun print-sufficient-digits-f64 (f)
   "print a double floating point number as a string with a given nr. of                                                                                                                                             
@@ -66,7 +66,7 @@
     (if code
 	(if (listp code)
 	    (case (car code)
-	      
+	      >
 	      (indent (format nil "~{~a~}~a"
 			      (loop for i below level collect "    ")
 			      (emit (cadr code))))
@@ -74,6 +74,31 @@
 	      (comments (let ((args (cdr code)))
 			  (format nil "~{# ~a~%~}" args)))
 	      (string (format nil "\"~a\"" (cadr code)))
+	      (toplevel (let ((args (cdr code)))
+			  (format nil "~{~a~%~}" (mapcar #'emit args))))
+	      (do0
+	       (let ((args (cdr code)))
+		 args))
+
+	      (defun (destructuring-bind (name lambda-list &rest body) (cdr code)
+		       (multiple-value-bind (req-param opt-param res-param
+					     key-param other-key-p aux-param key-exist-p)
+			   (parse-ordinary-lambda-list lambda-list)
+			 (declare (ignorable req-param opt-param res-param
+					     key-param other-key-p aux-param key-exist-p))
+			 (with-output-to-string (s)
+			   (format s "(defun ~a ~a)%"
+				 name
+				 `,@(append (mapcar #'emit req-param)
+					    (loop for e in key-param
+						  collect 
+						  (destructuring-bind ((keyword-name name) init suppliedp)
+						      e
+						    (declare (ignorable keyword-name suppliedp))
+						    (if init
+							`(= ,name ,init)
+							 `(,name nil))))))
+			 (format s "~a" (emit `(do ,@body)))))))
 	      
 	      
 	      (t (destructuring-bind (name &rest args) code
@@ -87,7 +112,7 @@
 				(format nil "(~a)(~a)" (emit name) (emit `(paren ,@args)))
 				(break "error: unknown call"))
 		       ;; function call
-		       #+nil (member code `(
+		       (progn #+nil (member (first code) `(
 					    + - * / mod rem incf decf
 					    = /= < <= max min
 					    and or not
@@ -99,19 +124,23 @@
 					    atom equal eq eql evenp oddp
 					    zerop null listp greaterp lessp
 					    numberp symbolp integerp rationalp floatp
-					    realp complexp characterp stringp arrayp packagep
-					    
-					    
+					    realp complexp characterp stringp
+					    arrayp packagep
+					    declare declaim
+					    in-package
+					    use-package
 					    ))
-		       (let* ((positional (loop for i below (length args) until (keywordp (elt args i)) collect
-													(elt args i)))
-			      (plist (subseq args (length positional)))
-			      (props (loop for e in plist by #'cddr collect e)))
-			 (format nil "~a~a" name
-				 (emit `(paren ,@(append
-						  positional
-						  (loop for e in props collect
-							`(= ,(format nil "~a" e) ,(getf plist e))))))))))))
+			   
+			   (progn ;; not common lisp
+			    (let* ((positional (loop for i below (length args) until (keywordp (elt args i)) collect
+													     (elt args i)))
+				   (plist (subseq args (length positional)))
+				   (props (loop for e in plist by #'cddr collect e)))
+			      (format nil "~a~a" name
+				      (emit `(paren ,@(append
+						       positional
+						       (loop for e in props collect
+							     `(= ,(format nil "~a" e) ,(getf plist e))))))))))))))
 	    (cond
 	      ((symbolp code) ;; print variable
 	       (format nil "~a" code))
