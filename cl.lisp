@@ -1,6 +1,7 @@
-;(ql:quickload "optima")
-;(ql:quickload "alexandria")
-
+(ql:quickload "optima")
+(ql:quickload "alexandria")
+					;
+;; (ql:quickload "cl-commonlisp-generator")
 (in-package :cl-commonlisp-generator)
 (setf (readtable-case *readtable*) :invert)
 
@@ -66,13 +67,12 @@
     (if code
 	(if (listp code)
 	    (case (car code)
-	      >
 	      (indent (format nil "~{~a~}~a"
 			      (loop for i below level collect "    ")
 			      (emit (cadr code))))
 	      (comment (format nil "# ~a~%" (cadr code)))
 	      (comments (let ((args (cdr code)))
-			  (format nil "~{# ~a~%~}" args)))
+			  (format nil "~{;;q ~a~%~}" args)))
 	      (string (format nil "\"~a\"" (cadr code)))
 	      (toplevel (let ((args (cdr code)))
 			  (format nil "~{~a~%~}" (mapcar #'emit args))))
@@ -86,19 +86,19 @@
 			   (parse-ordinary-lambda-list lambda-list)
 			 (declare (ignorable req-param opt-param res-param
 					     key-param other-key-p aux-param key-exist-p))
-			 (with-output-to-string (s)
-			   (format s "(defun ~a ~a)%"
+			 (format nil "(defun ~a (~a) ~a)"
 				 name
-				 `,@(append (mapcar #'emit req-param)
-					    (loop for e in key-param
-						  collect 
-						  (destructuring-bind ((keyword-name name) init suppliedp)
-						      e
-						    (declare (ignorable keyword-name suppliedp))
-						    (if init
-							`(= ,name ,init)
-							 `(,name nil))))))
-			 (format s "~a" (emit `(do ,@body)))))))
+				 (append (mapcar #'emit req-param)
+					 (loop for e in key-param
+					       collect 
+					       (destructuring-bind ((keyword-name name) init suppliedp)
+						   e
+						 (declare (ignorable keyword-name suppliedp))
+						 (if init
+						     `(= ,name ,init)
+						     `(,name nil)))))
+				 body)
+			 )))
 	      
 	      
 	      (t (destructuring-bind (name &rest args) code
@@ -132,15 +132,24 @@
 					    ))
 			   
 			   (progn ;; not common lisp
-			    (let* ((positional (loop for i below (length args) until (keywordp (elt args i)) collect
-													     (elt args i)))
+			     (let* ((positional (loop for i below (length args)
+						      until
+						      (keywordp (elt args i)) collect
+						      (elt args i)))
 				   (plist (subseq args (length positional)))
-				   (props (loop for e in plist by #'cddr collect e)))
-			      (format nil "~a~a" name
-				      (emit `(paren ,@(append
-						       positional
-						       (loop for e in props collect
-							     `(= ,(format nil "~a" e) ,(getf plist e))))))))))))))
+				    (props (loop for e in plist by #'cddr
+						 collect e)))
+			       (with-output-to-string (s)
+				(format s "(~a ~{~a~}"
+					name
+					positional
+					)
+				(when props
+				 (format s "&key ~{~a~}"
+					 (loop for e in props collect
+					       `( ,e ,(getf plist e)))))
+				(format s ")"
+					)))))))))
 	    (cond
 	      ((symbolp code) ;; print variable
 	       (format nil "~a" code))
