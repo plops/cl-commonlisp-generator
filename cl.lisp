@@ -86,18 +86,42 @@
 			   (parse-ordinary-lambda-list lambda-list)
 			 (declare (ignorable req-param opt-param res-param
 					     key-param other-key-p aux-param key-exist-p))
-			 (format nil "(defun ~a (~a) ~a)"
-				 name
-				 (append (mapcar #'emit req-param)
-					 (loop for e in key-param
-					       collect 
-					       (destructuring-bind ((keyword-name name) init suppliedp)
-						   e
-						 (declare (ignorable keyword-name suppliedp))
-						 (if init
-						     `(= ,name ,init)
-						     `(,name nil)))))
-				 body)
+			 (with-output-to-string (s)
+			  (format s "(defun ~a"
+				  name
+				  (append (mapcar #'emit req-param)
+					  (loop for e in key-param
+						collect 
+						(destructuring-bind ((keyword-name name) init suppliedp)
+						    e
+						  (declare (ignorable keyword-name suppliedp))
+						  (if init
+						      `(= ,name ,init)
+						      `(,name nil)))))
+				  body)
+			  (format s " (")
+			  (format s "~{~a~^ ~}"
+				  
+				  (mapcar #'emit req-param)
+				 
+				  )
+			  (when key-param
+			   (format s " &key ~{~a~^ ~}"
+				  
+				 
+				   (loop for e in key-param
+					 collect 
+					 (destructuring-bind ((keyword-name name) init suppliedp)
+					     e
+					   (declare (ignorable keyword-name suppliedp))
+					   (if init
+					       `(= ,name ,init)
+					       `(,name nil))))
+				   ))
+			  (format s ") ")
+			  (format s "~{~a~^~})"
+				  
+				  body))
 			 )))
 	      
 	      
@@ -140,14 +164,14 @@
 				    (props (loop for e in plist by #'cddr
 						 collect e)))
 			       (with-output-to-string (s)
-				(format s "(~a ~{~a~}"
+				(format s "(~a ~{~a~^ ~}"
 					name
 					positional
 					)
 				(when props
-				 (format s "&key ~{~a~}"
-					 (loop for e in props collect
-					       `( ,e ,(getf plist e)))))
+				 (format s " ~{~a~^ ~}"
+					 (loop for e in props appending
+					       `( ,(format nil ":~a" e) ,(getf plist e)))))
 				(format s ")"
 					)))))))))
 	    (cond

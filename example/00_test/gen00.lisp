@@ -27,7 +27,8 @@
 		(+ a 3 b))
 	      (defun test3 (a &key b)
 		(+ a 3 b))
-	      
+
+	      (test3 1 :b 3)
 	      (setf
 	       _code_git_version
 	       (string ,(let ((str (with-output-to-string (s)
