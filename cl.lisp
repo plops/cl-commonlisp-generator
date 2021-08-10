@@ -80,6 +80,14 @@
 	       (let ((args (cdr code)))
 		 args))
 
+	      (setf (let ((args (cdr code)))
+		      (format nil "(setf ~{~a~^ ~})"
+			      (mapcar #'emit args)
+			      #+nil
+			      (loop for i below (length args) by 2 collect
+								   (let ((a (elt args i))
+									 (b (elt args (+ 1 i))))
+								     `(= ,a ,b))))))
 	      (defun (destructuring-bind (name lambda-list &rest body) (cdr code)
 		       (multiple-value-bind (req-param opt-param res-param
 					     key-param other-key-p aux-param key-exist-p)
@@ -191,6 +199,8 @@
 	      ((symbolp code) ;; print variable
 	       (format nil "~a" code))
 	      ((stringp code)
+	       (format nil "~a" code)
+	       #+nil
 		(substitute #\: #\- (format nil "~a" code)))
 	      ((numberp code) ;; print constants
 	       (cond ((integerp code) (format str "~a" code))

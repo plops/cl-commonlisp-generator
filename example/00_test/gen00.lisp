@@ -25,6 +25,7 @@
 		(+ a 3))
 	      (defun test2 (a &optional b (c 4))
 		(+ a 3 b c))
+	      (test2 3 4)
 	      (defun test3 (a &key b (c 4))
 		(+ a 3 b c))
 
