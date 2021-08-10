@@ -105,6 +105,19 @@
 				  (mapcar #'emit req-param)
 				 
 				  )
+			  (when opt-param
+			    (format s " &optional ~{~a~^ ~}"
+				  
+				 
+				   (loop for e in opt-param
+					 collect 
+					 (destructuring-bind (name init suppliedp)
+					     e
+					   (declare (ignorable suppliedp))
+					   (if init
+					       `(,name ,init)
+					       name)))
+				   ))
 			  (when key-param
 			   (format s " &key ~{~a~^ ~}"
 				  
@@ -115,8 +128,8 @@
 					     e
 					   (declare (ignorable keyword-name suppliedp))
 					   (if init
-					       `(= ,name ,init)
-					       `(,name nil))))
+					       `(,name ,init)
+					       name)))
 				   ))
 			  (format s ") ")
 			  (format s "~{~a~^~})"

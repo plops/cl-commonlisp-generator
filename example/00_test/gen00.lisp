@@ -23,10 +23,10 @@
 	   `(toplevel
 	      (defun test1 (a)
 		(+ a 3))
-	      (defun test2 (a &optional b)
-		(+ a 3 b))
-	      (defun test3 (a &key b)
-		(+ a 3 b))
+	      (defun test2 (a &optional b (c 4))
+		(+ a 3 b c))
+	      (defun test3 (a &key b (c 4))
+		(+ a 3 b c))
 
 	      (test3 1 :b 3)
 	      (setf
