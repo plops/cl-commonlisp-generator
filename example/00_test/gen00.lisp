@@ -35,7 +35,7 @@
 	       (string ,(let ((str (with-output-to-string (s)
 				     (sb-ext:run-program "/usr/bin/git" (list "rev-parse" "HEAD") :output s))))
 			  (subseq str 0 (1- (length str)))))
-	       _code_repository (string ,(format nil "https://github.com/plops/cl-py-generator/tree/master/example/56_myhdl/source/04_tang_lcd/run_04_lcd.py"))
+	       _code_repository (string ,(format nil "https://github.com/plops/cl-commonlisp-generator/tree/master/example/00_test/gen00.lisp"))
 	       _code_generation_time
 	       (string ,(multiple-value-bind
 			      (second minute hour date month year day-of-week dst-p tz)
