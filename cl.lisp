@@ -89,6 +89,19 @@
 									 (b (elt args (+ 1 i))))
 								     (format nil "~a ~a" (emit a)
 									     (emit b)))))))
+
+	      (let (destructuring-bind (decls &rest body) (cdr code)
+		     (with-output-to-string (s)
+		       (format s "(let (")
+		       (when decls
+			 (format s "~{~a~^~%~})" (mapcar #'emit decls)))
+		       (format s "~{~a~^~%~}" (mapcar #'emit body)))))
+	      (let* (destructuring-bind (decls &rest body) (cdr code)
+		     (with-output-to-string (s)
+		       (format s "(let* (")
+		       (when decls
+			 (format s "~{~a~^~%~})" (mapcar #'emit decls)))
+		       (format s "~{~a~^~%~}" (mapcar #'emit body)))))
 	      (defun (destructuring-bind (name lambda-list &rest body) (cdr code)
 		       (multiple-value-bind (req-param opt-param res-param
 					     key-param other-key-p aux-param key-exist-p)
@@ -141,7 +154,7 @@
 					       name)))
 				   ))
 			  (format s ")~%")
-			  (format s "~{~a~^~})"
+			  (format s "~{~a~^~%~})"
 				  
 				  body))
 			 )))

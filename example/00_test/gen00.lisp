@@ -24,10 +24,13 @@
 	      (defun test1 (a)
 		(+ a 3))
 	      (defun test2 (a &optional b (c 4))
-		(+ a 3 b c))
+		(let* ((q (* b c))
+		      (p  (* q q))) (+ a 3 b p c)))
 	      (test2 3 4)
 	      (defun test3 (a &key b (c 4))
-		(+ a 3 b c))
+		(let ((q (* 2 b))
+		      (p (+ b c)))
+		  (+ a 3 (* q p))))
 
 	      (test3 1 :b 3)
 	      (setf
