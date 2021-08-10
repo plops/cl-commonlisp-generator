@@ -29,7 +29,7 @@
 	 (write-sequence code-str s))
        
 
-       (sb-ext:run-program "/usr/local/bin/lisp-format" (list (namestring fn)))
+       (sb-ext:run-program "/usr/local/bin/lisp-format" (list "-i" (namestring fn)))
        ))))
 
 (defun print-sufficient-digits-f64 (f)
@@ -81,13 +81,14 @@
 		 args))
 
 	      (setf (let ((args (cdr code)))
-		      (format nil "(setf ~{~a~^ ~})"
-			      (mapcar #'emit args)
-			      #+nil
+		      (format nil "(setf ~{~a~^~%~})"
+			      #+nil (mapcar #'emit args)
+			      
 			      (loop for i below (length args) by 2 collect
 								   (let ((a (elt args i))
 									 (b (elt args (+ 1 i))))
-								     `(= ,a ,b))))))
+								     (format nil "~a ~a" (emit a)
+									     (emit b)))))))
 	      (defun (destructuring-bind (name lambda-list &rest body) (cdr code)
 		       (multiple-value-bind (req-param opt-param res-param
 					     key-param other-key-p aux-param key-exist-p)
@@ -139,7 +140,7 @@
 					       `(,name ,init)
 					       name)))
 				   ))
-			  (format s ") ")
+			  (format s ")~%")
 			  (format s "~{~a~^~})"
 				  
 				  body))
