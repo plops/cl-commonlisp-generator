@@ -75,11 +75,31 @@
 		   (when decls
 		     (format s "~{~a~^~%~}" (loop for (e f) in decls
 						  collect
-						  (format nil "(~a ~a)" e (emit f)))))
+						  (format nil "(~a ~a)" e (if (listp f)
+									      (mapcar #'emit f)
+									      (emit f))))))
 		   (format s ")~%~{~a~^~%~})" (mapcar #'emit body))))
 	       )
 	      ((member (car code)
-		       `(* + - / <= < ))
+		       `(+ - * / mod rem incf decf
+			 = /= < <= max min
+			 and or not
+			 logand logior logxor lognor logeqv
+			 ;cond if when case
+			 ;loop dotimes dolist ; do
+			 ;defun
+			 block progn prog1
+			 
+			 atom equal eq eql evenp oddp
+			 zerop null listp greaterp lessp
+			 numberp symbolp integerp rationalp floatp
+			 realp complexp characterp stringp
+			 arrayp packagep
+			 ;declare declaim
+			 in-package
+			 use-package
+			 
+			 ))
 	       (let ((args (cdr code)))
 		 (format nil "(~a ~{~a~^ ~})" (car code) (mapcar #'emit args))))
 	      (t
@@ -105,6 +125,16 @@
 									    (b (elt args (+ 1 i))))
 									(format nil "~a ~a" (emit a)
 										(emit b)))))))
+		 (multiple-value-bind
+		       (let ((args (cdr code)))
+			 (destructuring-bind (variables var &rest body) args
+			   (with-output-to-string (s)
+			     (format s "(multiple-value-bind (")
+			     (format s "~{~a~^ ~})~%" variables)
+			     (format s "~a~%" (emit var))
+			     (format s "~{~a~^~%~})"
+				      (mapcar #'emit body))
+			     ))))
 		 
 		 (defun (destructuring-bind (name lambda-list &rest body) (cdr code)
 			  (multiple-value-bind (req-param opt-param res-param
@@ -150,7 +180,6 @@
 					))
 			      (format s ")~%")
 			      (format s "~{~a~^~%~})"
-				  
 				      (mapcar #'emit body)))
 			    )))
 	      
@@ -166,26 +195,8 @@
 				   (format nil "(~a)(~a)" (emit name) (emit `(paren ,@args)))
 				   (break "error: unknown call"))
 			  ;; function call
-			  (progn #+nil (member (first code) `(
-							      + - * / mod rem incf decf
-							      = /= < <= max min
-							      and or not
-							      logand logior logxor lognor logeqv
-							      cond if when case
-							      loop dotimes dolist ; do
-							      block progn prog1
-							      defun
-							      atom equal eq eql evenp oddp
-							      zerop null listp greaterp lessp
-							      numberp symbolp integerp rationalp floatp
-							      realp complexp characterp stringp
-							      arrayp packagep
-							      declare declaim
-							      in-package
-							      use-package
-							      ))
-			   
-				 (progn ;; not common lisp
+			  (progn 		   
+			    (progn ;; not common lisp
 				   (let* ((positional (loop for i below (length args)
 							    until
 							    (keywordp (elt args i)) collect
@@ -196,7 +207,7 @@
 				     (with-output-to-string (s)
 				       (format s "(~a ~{~a~^ ~}"
 					       name
-					       positional
+					       (mapcar #'emit positional)
 					       )
 				       (when props
 					 (format s " ~{~a~^ ~}"
@@ -205,10 +216,16 @@
 				       (format s ")"
 					       )))))))))))
 	    (cond
+	      ((equal code t)
+	       (format nil "t"))
+	      ((equal code nil)
+	       (format nil "nil"))
 	      ((symbolp code) ;; print variable
 	       (format nil "~a" code))
+	      ((keywordp code) ;; print keyword
+	       (format nil ":~a" code))
 	      ((stringp code)
-	       (format nil "~a" code)
+	       (format nil "\"~a\"" code)
 	       #+nil
 		(substitute #\: #\- (format nil "~a" code)))
 	      ((numberp code) ;; print constants
