@@ -28,7 +28,7 @@
 		      (p  (* q q))) (+ a 3 b p c)))
 	      (test2 3 4)
 	      (defun test3 (a &key b (c 4))
-		(let ((q (* 2 b))
+		(let ((q (* 2 (string "b")))
 		      (p (+ b c)))
 		  (+ a 3 (* q p))))
 
