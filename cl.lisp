@@ -62,8 +62,12 @@
   (when clear-env
     (setf *env-functions* nil
 	  *env-macros* nil))
-  (flet ((emit (code &optional (dl 0))
-	   (emit-cl :code code :clear-env nil :level (+ dl level))))
+  (labels ((emit (code &optional (dl 0))
+	   (emit-cl :code code :clear-env nil :level (+ dl level)))
+	   (emits (code)
+	     (if (listp code)
+		 (mapcar #'emit code)
+		 (emit code))))
     (if code
 	(if (listp code)
 	    (cond
@@ -75,9 +79,7 @@
 		   (when decls
 		     (format s "~{~a~^~%~}" (loop for (e f) in decls
 						  collect
-						  (format nil "(~a ~a)" e (if (listp f)
-									      (mapcar #'emit f)
-									      (emit f))))))
+						  (format nil "(~a ~a)" e (emits f)))))
 		   (format s ")~%~{~a~^~%~})" (mapcar #'emit body))))
 	       )
 	      ((member (car code)
@@ -120,27 +122,28 @@
 		 (if (destructuring-bind (condition true-statement &optional false-statement) (cdr code)
 		    (with-output-to-string (s)
 		      (format s "(if ~a~%"
-			      (emit condition)
-			      )
-		      (format s "~a" (emit true-statement))
+			      (emits condition))
+		      (format s "~a" (emits true-statement))
 		      (when false-statement
-			(format s "~&~a" (emit false-statement))
+			(format s "~&~a" (emits false-statement))
 			)
 		      (format s ")~%"))))
 		 (when (destructuring-bind (condition &rest forms) (cdr code)
 			 (with-output-to-string (s)
-			   (format s "(when ~a~%" condition)
+			   (format s "(when ~a~%"
+				   (emits condition))
 			   (format s "~{~a~^~%~}"
 				   (mapcar #'emit forms))
 			   (format s ")~%"))))
 		 (with-open-file
 		     (destructuring-bind (args &rest body) (cdr code)
 		       (with-output-to-string (s)
-			 (format s "(with-open-file (~{~a~^ ~})~%" (mapcar #'emit args))
+			 (format s "(with-open-file (~{~a~^ ~})~%"
+				 (mapcar #'emit args))
 			 (format s "~{~a~^~%~}"
-				   (mapcar #'emit body))
+				 (mapcar #'emit body))
 			 (format s ")~%"))
-			 ))
+		       ))
 		 (setf (let ((args (cdr code)))
 			 (format nil "(setf ~{~a~^~%~})"
 				 #+nil (mapcar #'emit args)
