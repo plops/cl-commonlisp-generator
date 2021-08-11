@@ -132,8 +132,14 @@
 			   (format s "(when ~a~%" condition)
 			   (format s "~{~a~^~%~}"
 				   (mapcar #'emit forms))
-			   (format s ")~%"))
-			 
+			   (format s ")~%"))))
+		 (with-open-file
+		     (destructuring-bind (args &rest body) (cdr code)
+		       (with-output-to-string (s)
+			 (format s "(with-open-file (~{~a~^ ~})~%" (mapcar #'emit args))
+			 (format s "~{~a~^~%~}"
+				   (mapcar #'emit body))
+			 (format s ")~%"))
 			 ))
 		 (setf (let ((args (cdr code)))
 			 (format nil "(setf ~{~a~^~%~})"
