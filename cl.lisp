@@ -101,7 +101,7 @@
 			 
 			 ))
 	       (let ((args (cdr code)))
-		 (format nil "(~a ~{~a~^ ~})" (car code) (mapcar #'emit args))))
+		 (format nil "(~a ~{~a~^~%~})" (car code) (mapcar #'emit args))))
 	      (t
 	       (case (car code)
 		 (indent (format nil "~{~a~}~a"
@@ -117,6 +117,24 @@
 		  (let ((args (cdr code)))
 		    args))
 
+		 (if (destructuring-bind (condition true-statement &optional false-statement) (cdr code)
+		    (with-output-to-string (s)
+		      (format s "(if ~a~%"
+			      (emit condition)
+			      )
+		      (format s "~a" (emit true-statement))
+		      (when false-statement
+			(format s "~&~a" (emit false-statement))
+			)
+		      (format s ")~%"))))
+		 (when (destructuring-bind (condition &rest forms) (cdr code)
+			 (with-output-to-string (s)
+			   (format s "(when ~a~%" condition)
+			   (format s "~{~a~^~%~}"
+				   (mapcar #'emit forms))
+			   (format s ")~%"))
+			 
+			 ))
 		 (setf (let ((args (cdr code)))
 			 (format nil "(setf ~{~a~^~%~})"
 				 #+nil (mapcar #'emit args)
