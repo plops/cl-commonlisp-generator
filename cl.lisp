@@ -245,10 +245,11 @@
 	    (cond
 	      ((equal code t)
 	       "t")
+	      ((keywordp code) ;; print keyword (needs to be before symbol)
+	       (format nil ":~a" code))
 	      ((symbolp code) ;; print variable
 	       (format nil "~a" code))
-	      ((keywordp code) ;; print keyword
-	       (format nil ":~a" code))
+	      
 	      ((stringp code)
 	       (format nil "\"~a\"" code)
 	       #+nil
