@@ -217,9 +217,7 @@
 					       )))))))))))
 	    (cond
 	      ((equal code t)
-	       (format nil "t"))
-	      ((equal code nil)
-	       (format nil "nil"))
+	       "t")
 	      ((symbolp code) ;; print variable
 	       (format nil "~a" code))
 	      ((keywordp code) ;; print keyword
@@ -236,5 +234,5 @@
 		      (format str "((~a) + 1j * (~a))"
 			      (print-sufficient-digits-f64 (realpart code))
 			      (print-sufficient-digits-f64 (imagpart code))))))))
-	"")))
+	"nil")))
 
