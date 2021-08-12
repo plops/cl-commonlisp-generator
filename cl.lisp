@@ -72,7 +72,7 @@
 	(if (listp code)
 	    (cond
 	      ((member (car code)
-		       `(let let*))
+		       `(let let* labels flet))
 	       (destructuring-bind (decls &rest body) (cdr code)
 		 (with-output-to-string (s)
 		   (format s "(~a (" (car code))
