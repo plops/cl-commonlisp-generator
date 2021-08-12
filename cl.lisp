@@ -135,6 +135,17 @@
 			   (format s "~{~a~^~%~}"
 				   (mapcar #'emit forms))
 			   (format s ")~%"))))
+		 (case (destructuring-bind (expr &rest forms) (cdr code)
+			 (with-output-to-string (s)
+			   (format s "(case ~a~%"
+				   (emits expr))
+			   (loop for (value code) in forms
+				 do
+				    (format s "(~a~%" (emits value))
+				    (format s "~a" (emit code))
+				    (format s ")~%")
+				 )
+			   (format s ")~%"))))
 		 (with-open-file
 		     (destructuring-bind (args &rest body) (cdr code)
 		       (with-output-to-string (s)
