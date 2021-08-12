@@ -173,6 +173,16 @@
 			     (format s "~{~a~^~%~})"
 				      (mapcar #'emit body))
 			     ))))
+		 (destructuring-bind
+		       (let ((args (cdr code)))
+			 (destructuring-bind (variables var &rest body) args
+			   (with-output-to-string (s)
+			     (format s "(destructuring-bind (")
+			     (format s "~{~a~^ ~})~%" variables)
+			     (format s "~a~%" (emit var))
+			     (format s "~{~a~^~%~})"
+				      (mapcar #'emit body))
+			     ))))
 		 
 		 (defun (destructuring-bind (name lambda-list &rest body) (cdr code)
 			  (multiple-value-bind (req-param opt-param res-param
