@@ -299,7 +299,7 @@
 	       (format nil "~a" code))
 	      
 	      ((stringp code)
-	       (format nil "\"~a\"" code)
+	       (format nil "~a" code)
 	       #+nil
 		(substitute #\: #\- (format nil "~a" code)))
 	      ((numberp code) ;; print constants
