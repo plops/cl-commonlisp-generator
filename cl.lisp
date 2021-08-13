@@ -96,6 +96,17 @@
 		   (format s ")~%~{~a~^~%~})" (mapcar #'emit body))))
 	       )
 	      ((member (car code)
+		       `(with-open-file with-output-to-string))
+	       (destructuring-bind (args &rest body) (cdr code)
+		 (with-output-to-string (s)
+		   (format s "(~a (~{~a~^ ~})~%"
+			   (car code)
+			   (mapcar #'emit args))
+		   (format s "~{~a~^~%~}"
+			   (mapcar #'emit body))
+		   (format s ")"))
+		 ))
+	      ((member (car code)
 		       `(+ - * / mod rem incf decf
 			 = /= < <= max min
 			 and or not
@@ -170,15 +181,7 @@
 				    (format s ")")
 				 )
 			   (format s ")"))))
-		 (with-open-file
-		     (destructuring-bind (args &rest body) (cdr code)
-		       (with-output-to-string (s)
-			 (format s "(with-open-file (~{~a~^ ~})~%"
-				 (mapcar #'emit args))
-			 (format s "~{~a~^~%~}"
-				 (mapcar #'emit body))
-			 (format s ")"))
-		       ))
+		 
 		 (setf (let ((args (cdr code)))
 			 (format nil "(setf ~{~a~^~%~})"
 				 #+nil (mapcar #'emit args)
