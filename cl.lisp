@@ -1,6 +1,5 @@
-(ql:quickload "optima")
-(ql:quickload "alexandria")
-					;
+;(ql:quickload "optima")
+;(ql:quickload "alexandria")
 ;; (ql:quickload "cl-commonlisp-generator")
 (in-package :cl-commonlisp-generator)
 (setf (readtable-case *readtable*) :invert)
@@ -28,7 +27,6 @@
 			  :if-does-not-exist :create)
 	 (write-sequence code-str s))
        
-
        (sb-ext:run-program "/usr/local/bin/lisp-format" (list "-i" (namestring fn)))
        ))))
 
@@ -72,7 +70,7 @@
 	(if (listp code)
 	    (cond
 	      ((member (car code)
-		       `(let let* labels flet))
+		       `(let let*))
 	       (destructuring-bind (decls &rest body) (cdr code)
 		 (with-output-to-string (s)
 		   (format s "(~a (" (car code))
@@ -80,6 +78,21 @@
 		     (format s "~{~a~^~%~}" (loop for (e f) in decls
 						  collect
 						  (format nil "(~a ~a)" e (emits f)))))
+		   (format s ")~%~{~a~^~%~})" (mapcar #'emit body))))
+	       )
+	      ((member (car code)
+		       `(labels flet))
+	       (destructuring-bind (decls &rest body) (cdr code)
+		 (with-output-to-string (s)
+		   (format s "(~a (" (car code))
+		   (when decls
+		     (format s "~{~a~^~%~}" (loop for e in decls
+						  collect
+						  (destructuring-bind (var params &rest body) e
+						    (format nil "(~a ~a~%~{~a~^~%~})"
+							    var
+							    (mapcar #'emit params)
+							    (mapcar #'emit body))))))
 		   (format s ")~%~{~a~^~%~})" (mapcar #'emit body))))
 	       )
 	      ((member (car code)
