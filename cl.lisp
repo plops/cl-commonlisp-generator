@@ -134,11 +134,11 @@
 
 		 (if (destructuring-bind (condition true-statement &optional false-statement) (cdr code)
 		    (with-output-to-string (s)
-		      (format s "(if ~a~%"
+		      (format s "(if ~a"
 			      (emits condition))
-		      (format s "~a" (emits true-statement))
+		      (format s "~&~a" (emit true-statement))
 		      (when false-statement
-			(format s "~&~a" (emits false-statement))
+			(format s "~&~a" (emit false-statement))
 			)
 		      (format s ")"))))
 		 (when (destructuring-bind (condition &rest forms) (cdr code)
